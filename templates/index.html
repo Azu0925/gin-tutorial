@@ -6,5 +6,31 @@
   </head>
   <body>
     <h1 style="color: rebeccapurple;">{{.message}}</h1>
+    <div class="form">
+      <form id="form">
+        <input type="file" name="image">
+        <button type="button" onclick="upload()">アップロード</button>
+      </form>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.3.1.js"></script>
+    <script>
+      function upload(){
+        const formdata = new FormData($('#form').get(0))
+        $.ajax({
+          url: "http://localhost:3000/upload",
+          type: "POST",
+          data: formdata,
+          contentType: false,
+          processData: false,
+          dataType: "html"
+        })
+        .done(function(data, textStatus, jqXHR){
+          alert(data)
+        })
+        .fail(function(jrXHR, textStatus, errorThrown){
+          alert("fail")
+        })
+      }
+    </script>
   </body>
 </html>
