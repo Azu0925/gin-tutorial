@@ -1,55 +1,26 @@
 package main
 
 import (
-	"net/http"
-
-	"io"
-	"log"
-	"os"
+	"gin-tutorial/controller"
+	"gin-tutorial/middleware"
 
 	"github.com/gin-gonic/gin"
+	_ "github.com/go-sql-driver/mysql"
 )
 
 func main() {
 	engine := gin.Default()
-	engine.Static("/static", "./static")
-	ua := ""
-	engine.Use(func(c *gin.Context) {
-		ua = c.GetHeader("User-Agent")
-		c.Next()
-	})
-	engine.LoadHTMLGlob("templates/*")
-	engine.GET("/", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"message":    "hello world",
-			"User-Agent": ua,
-		})
-	})
-	engine.GET("/home", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "index.html", gin.H{
-			"message": "hello gin",
-		})
-	})
-	engine.POST("/upload", func(c *gin.Context) {
-		file, header, err := c.Request.FormFile("image")
-		if err != nil {
-			c.String(http.StatusBadRequest, "Bad request")
-			return
+	engine.Use(middleware.RecordUaAndTime)
+
+	bookEngine := engine.Group("/book")
+	{
+		v1 := bookEngine.Group("/v1")
+		{
+			v1.POST("/add", controller.BookAdd)
+			v1.GET("/list", controller.BookList)
+			v1.PUT("/update", controller.BookUpdate)
+			v1.DELETE("/delete", controller.BookDelete)
 		}
-		fileName := header.Filename
-		dir, _ := os.Getwd()
-		out, err := os.Create(dir + "\\images\\" + fileName)
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer out.Close()
-		_, err = io.Copy(out, file)
-		if err != nil {
-			log.Fatal(err)
-		}
-		c.JSON(http.StatusOK, gin.H{
-			"status": "ok",
-		})
-	})
+	}
 	engine.Run(":3000")
 }
